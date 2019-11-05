@@ -102,3 +102,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+example/rest_extensions/*
