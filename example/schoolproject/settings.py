@@ -122,3 +122,40 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 AUTH_USER_MODEL = "account.User"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "": {
+            'format': ('[%(levelname)5s] %(asctime)s %(pathname)s '
+                       '%(funcName)s (line: %(lineno)d)\n'
+                       '    %(message)s'),
+        },
+        "default": {
+            'format': ('[%(levelname)5s] %(asctime)s %(pathname)s '
+                       '%(funcName)s (line: %(lineno)d)\n'
+                       '    %(message)s'),
+        },
+    },
+    "handlers": {
+        "stream": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+        "default": {
+            'level': "INFO",
+            'encoding': 'utf-8',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 1024 * 10,
+            'backupCount': 40,
+            'filename': os.path.join(BASE_DIR, 'log/info.log'),
+            "formatter": "default",
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["default", "stream"],
+            "level": "INFO",
+        },
+    }
+}
