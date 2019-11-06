@@ -15,8 +15,8 @@ log = logging.getLogger(__name__)
 log.info("load rest_extensions urls")
 log.info(apps.app_configs)
 app_name = "rest_extensions"
-urlpatterns = [
-]
+router = routers.DefaultRouter()
+api_urlpatterns = []
 
 
 class AppUrls(object):
@@ -24,10 +24,17 @@ class AppUrls(object):
 
     def __init__(self, app_config):
         self.urlpatterns = []
+        self.app_name = app_config.name
+        self.app_module = app_config.module
         for model in app_config.get_models():
+            model_view_set = views.ModelViewSetFactory(
+                self.app_module, model).create_view_set()
+            router.register(model.__name__, model_view_set)
             self.urlpatterns.append(
-                path("{}/multidelete/".format(model.__name__), views.MultiDeleteSerializer),
+                path("{}/multidelete/".format(model.__name__),
+                     views.MultiDeleteSerializer),
             )
+        self.urlpatterns += router.urls
 
 
 class AppModelUrl(object):
@@ -39,13 +46,11 @@ for app_key_name in apps.app_configs:
     app_config = apps.app_configs[app_key_name]
     app_urls = AppUrls(app_config)
     log.info("引入app: {}".format(app_key_name))
-    urlpatterns.append(
-        path("{}/".format(app_key_name), include(app_urls)),
+    api_urlpatterns.append(
+        path("{}/".format(app_key_name), include(
+            app_urls, namespace=app_key_name)),
     )
-    
+    log.info(app_urls.urlpatterns)
 
 app_name = "rest_extensions"
-
-
-router = routers.DefaultRouter()
-log.info(urlpatterns)
+urlpatterns = list(api_urlpatterns)

@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="django-yunpian-app",
-    version="1.0.5",
+    version="0.0.1",
     author="Xiang Wang",
     author_email="ramwin@qq.com",
     description="create normal api for all your models",

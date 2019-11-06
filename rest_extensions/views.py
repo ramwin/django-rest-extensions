@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.db.models.fields.files import FileField
 from django.utils.decorators import classonlymethod
 from functools import update_wrapper
@@ -6,27 +5,18 @@ import json
 import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.models import LogEntry
-from django.db.models.fields.related import ForeignKey
-from django.db.models.fields.related import ManyToManyField
 from django.contrib.contenttypes.models import ContentType
-from rest_framework import viewsets, serializers
+from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import CreateAPIView, GenericAPIView
-from rest_framework.authtoken.models import Token
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from rest_extensions.fields import DataListField
-from rest_extensions.serializers import MyJSONField
-from . import paginations, permissions, utils, mixins
-from . import permissions as ext_permissions
+from . import paginations, utils, mixins
 from .serializers import MultiDeleteSerializer
 from .filters import create_filter
-import django_filters
 
 
-class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin, viewsets.ModelViewSet):
-    """{}相关的接口"""
-    serializers = None
-    permissions = None
+class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin,
+                     viewsets.ModelViewSet):
     model = None
     queryset = None
     pagination_class = paginations.PaginationClass
@@ -34,7 +24,6 @@ class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin, vie
     filters = None
 
     def __init__(self, *args, **kwargs):
-        self.model = self.queryset.model
         self.filter_class = create_filter(self.filters, self.model)
         return super(MyModelViewSet, self).__init__(*args, **kwargs)
 
@@ -42,10 +31,7 @@ class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin, vie
         return self.model.objects.all()
 
     def list(self, request, *args, **kwargs):
-        logging.debug("{}获取{}列表".format(request.user,
-                                       self.model._meta.verbose_name))
         return super(MyModelViewSet, self).list(request, *args, **kwargs)
-
 
     @classonlymethod
     def as_view(cls, actions=None, **initkwargs):
@@ -147,14 +133,14 @@ class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin, vie
                 kwargs['last_editor'] = self.request.user
             instance = serializer.save(**kwargs)
             contenttype = ContentType.objects.get_for_model(self.model)
-            LogEntry.objects.create(
-                user=self.request.user,
-                object_id=instance.id,
-                object_repr=str(instance),
-                content_type=contenttype,
-                change_message=json.dumps([{'added': {}}]),
-                action_flag=1
-            )
+            LogEntry.objects.create(user=self.request.user,
+                                    object_id=instance.id,
+                                    object_repr=str(instance),
+                                    content_type=contenttype,
+                                    change_message=json.dumps([{
+                                        'added': {}
+                                    }]),
+                                    action_flag=1)
         else:
             serializer.save()
 
@@ -168,14 +154,12 @@ class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin, vie
 
     def perform_destroy(self, instance):
         contenttype = ContentType.objects.get_for_model(self.model)
-        LogEntry.objects.create(
-            user=self.request.user,
-            object_id=instance.id,
-            object_repr=str(instance),
-            content_type=contenttype,
-            change_message="",
-            action_flag=3
-        )
+        LogEntry.objects.create(user=self.request.user,
+                                object_id=instance.id,
+                                object_repr=str(instance),
+                                content_type=contenttype,
+                                change_message="",
+                                action_flag=3)
         instance.delete()
 
     def perform_update(self, serializer):
@@ -185,19 +169,17 @@ class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin, vie
             kwargs = {}
         instance = serializer.save(**kwargs)
         contenttype = ContentType.objects.get_for_model(self.model)
-        LogEntry.objects.create(
-            user=self.request.user,
-            object_id=instance.id,
-            object_repr=str(instance),
-            content_type=contenttype,
-            change_message="[]",
-            action_flag=2
-        )
+        LogEntry.objects.create(user=self.request.user,
+                                object_id=instance.id,
+                                object_repr=str(instance),
+                                content_type=contenttype,
+                                change_message="[]",
+                                action_flag=2)
         return instance
 
     def update(self, request, *args, **kwargs):
         logging.info("update")
-        model=self.queryset.model
+        model = self.model
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         for field in model._meta.get_fields():
@@ -206,15 +188,18 @@ class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin, vie
                 continue
             else:
                 logging.info(field)
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance,
+                                         data=request.data,
+                                         partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        serializer_class = utils.RetrieveSerializerFactory(model).create_serializer()
+        serializer_class = utils.RetrieveSerializerFactory(
+            model).create_serializer()
         data = serializer_class(instance).data
         return Response(data)
 
     def create(self, request, *args, **kwargs):
-        model = self.queryset.model
+        model = self.model
         for field in model._meta.get_fields():
             if field.name not in request.data:
                 continue
@@ -233,3 +218,22 @@ class MultiDeleteView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         self.queryset.filter(id__in=serializer.validated_data["ids"]).delete()
         return Response(status=204)
+
+
+class ModelViewSetFactory(object):
+    def __init__(self, app_module, model):
+        self.model = model
+        self.app_module = app_module
+
+    def create_view_set(self):
+        class TmpModelViewSet(MyModelViewSet):
+            pass
+
+        model_view_set = TmpModelViewSet
+        model_view_set.model = self.model
+        model_view_set.queryset = self.model.objects.all()
+        model_view_set.permissions = getattr(self.app_module, "permissions",
+                                             None)
+        model_view_set.serializers = getattr(self.app_module, "serializers",
+                                             None)
+        return model_view_set

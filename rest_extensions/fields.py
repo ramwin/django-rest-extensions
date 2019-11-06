@@ -8,6 +8,9 @@ from django.db.models import TextField
 import json
 
 
+log = logging.getLogger(__name__)
+
+
 class DataListField(TextField):
 
     def from_db_value(self, value, expression, connection):
@@ -17,11 +20,12 @@ class DataListField(TextField):
             return value
         try:
             return json.loads(value)
-        except:
+        except Exception as e:
+            log.error(e)
             return []
 
     def to_python(self, value):
-        logging.debug("DataListField.to_python")
+        log.debug("DataListField.to_python")
         if not value:
             return []
         if not isinstance(value, str):
@@ -29,12 +33,12 @@ class DataListField(TextField):
         try:
             return json.loads(value)
         except Exception as e:
-            logging.error(e)
+            log.error(e)
             return []
 
     def get_prep_value(self, value):
-        logging.debug("DataListField.get_prep_value")
-        logging.debug(value)
+        log.debug("DataListField.get_prep_value")
+        log.debug(value)
         if not value:
             return json.dumps([])
         if isinstance(value, str):
