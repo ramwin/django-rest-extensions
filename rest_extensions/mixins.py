@@ -1,5 +1,6 @@
 import logging
-from rest_framework import serializers
+import importlib
+from rest_framework import serializers as rest_serializers
 from rest_extensions.fields import DataListField
 from rest_extensions.serializers import MyJSONField
 from . import utils
@@ -7,6 +8,17 @@ from . import utils
 
 class AutoSerializerMixin(object):
     def get_serializer_class(self):
+        logging.info("get serializers")
+        serializers = None
+        if getattr(self, "serializers", None):
+            logging.info("has serializers")
+            serializers = self.serializers
+        elif getattr(self, "app_module", None):
+            logging.info("has app_module")
+            if importlib.util.find_spec(
+                    "{}.serializers".format(self.app_config.name)):
+                serializers = importlib.import_module(
+                    "{}.serializers".format(self.app_config.name))
         serializer_name1 = "{model_name}{action}Serializer".format(
             model_name=self.model.__name__,
             action=self.action.capitalize(),
@@ -16,9 +28,10 @@ class AutoSerializerMixin(object):
         serializer_name3 = "{model_name}BaseSerializer".format(
             model_name=self.model.__name__, )
         for name in [serializer_name1, serializer_name2, serializer_name3]:
-            serializer_class = getattr(self.serializers, name, None)
+            serializer_class = getattr(serializers, name, None)
             if serializer_class:
                 return serializer_class
+        logging.info("{} Does not exist".format(serializer_name1, serializer_name2, serializer_name3))
 
         if self.action == "create":
             return utils.CreateSerializerFactory(
@@ -37,7 +50,7 @@ class AutoSerializerMixin(object):
 
         tmpMeta = Meta
 
-        class TmpSerializer(serializers.ModelSerializer):
+        class TmpSerializer(rest_serializers.ModelSerializer):
             Meta = tmpMeta
 
         serializer_class = TmpSerializer
@@ -56,4 +69,6 @@ class AutoPermissionMixin(object):
                 permissions.append(
                     getattr(self.permissions, permission_class_name)()
                 )
+        else:
+            logging.info("no permissions file")
         return permissions

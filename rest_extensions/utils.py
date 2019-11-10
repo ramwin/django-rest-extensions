@@ -22,6 +22,9 @@ class CreateSerializerFactory(object):
 
             def create(self, validated_data):
                 poped_many_fields = {}  # {"name": [1,2,3] }
+                for many_field in set(self.Meta.model._meta.get_fields()) - set(self.Meta.model._meta.fields):
+                    if many_field.name in validated_data:
+                        poped_many_fields[many_field.name] = validated_data.pop(many_field.name)
                 instance = self.Meta.model.objects.create(**validated_data)
                 for field_name, values in poped_many_fields.items():
                     getattr(instance, field_name).set(values)

@@ -28,7 +28,7 @@ class AppUrls(object):
         self.app_module = app_config.module
         for model in app_config.get_models():
             model_view_set = views.ModelViewSetFactory(
-                self.app_module, model).create_view_set()
+                self.app_module, model, app_config).create_view_set()
             router.register(model.__name__, model_view_set)
             self.urlpatterns.append(
                 path("{}/multidelete/".format(model.__name__),
@@ -45,12 +45,11 @@ for app_key_name in apps.app_configs:
     log.info(app_key_name)
     app_config = apps.app_configs[app_key_name]
     app_urls = AppUrls(app_config)
-    log.info("引入app: {}".format(app_key_name))
     api_urlpatterns.append(
         path("{}/".format(app_key_name), include(
             app_urls, namespace=app_key_name)),
     )
-    log.info(app_urls.urlpatterns)
+    # log.info(app_urls.urlpatterns)
 
 app_name = "rest_extensions"
 urlpatterns = list(api_urlpatterns)
