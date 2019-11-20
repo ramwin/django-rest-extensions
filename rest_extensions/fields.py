@@ -4,7 +4,7 @@
 
 
 import logging
-from django.db.models import TextField
+from django.db.models import Field, TextField
 import json
 
 
@@ -50,3 +50,66 @@ class DataListField(TextField):
             return obj
         else:
             return json.dumps(obj, indent=4)
+
+
+class DictField(Field):
+
+    description = "enable mysql or sqlite to store json data"
+
+    def to_python(self, value):
+        return json.loads(value)
+
+    def from_db_value(self, value, expression, connection):
+        return json.loads(value)
+
+
+class Color:
+    """color"""
+
+    def __init__(self, r, g, b):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    @classmethod
+    def default(cls):
+        return cls(255, 255, 255)
+
+
+class ColorField(Field):
+
+    def __init__(self, *args, **kwargs):
+        kwargs["max_length"] = 52
+        super().__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        log.info("ColorField.deconstruct")
+        name, path, args, kwargs = super().deconstruct()
+        del kwargs["max_length"]
+        return name, path, args, kwargs
+
+    def db_type(self, connection):
+        log.info("ColorField.db_type")
+        return "char(52)"
+
+    def from_db_value(self, value, expression, connection):
+        log.info("ColorField.from_db_value")
+        if value is None:
+            return Color.default()
+        r, g, b = list(map(lambda x: int(x), value.split(",")))
+        return Color(r, g, b)
+
+    def to_python(self, value):
+        log.info("ColorField.to_python")
+        if isinstance(value, Color):
+            return value
+        if value is None:
+            return Color.default()
+        r, g, b = list(map(lambda x: int(x), value.split(",")))
+        return Color(r, g, b)
+
+    def get_prep_value(self, value):
+        log.info("ColorField.get_prep_value")
+        if value is None:
+            return None
+        return ",".join([value.r, value.g, value.b])
