@@ -3,6 +3,7 @@
 # Xiang Wang @ 2019-10-17 09:31:03
 
 
+import random
 import logging
 from django.db.models import Field, TextField
 import json
@@ -75,6 +76,25 @@ class Color:
     def default(cls):
         return cls(255, 255, 255)
 
+    @classmethod
+    def random(cls):
+        return cls(
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255),
+            )
+
+    def __eq__(self, color):
+        if isinstance(color, Color):
+            return self.r == color.r and self.g == color.g and self.b == color.b
+        return False
+
+    def __str__(self):
+        return "r: {}, g: {}, b: {}".format(self.r, self.g, self.b)
+
+    def __repr__(self):
+        return "Color: {}".format(self)
+
 
 class ColorField(Field):
 
@@ -83,13 +103,13 @@ class ColorField(Field):
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
-        log.info("ColorField.deconstruct")
+        log.debug("ColorField.deconstruct")
         name, path, args, kwargs = super().deconstruct()
         del kwargs["max_length"]
         return name, path, args, kwargs
 
     def db_type(self, connection):
-        log.info("ColorField.db_type")
+        log.debug("ColorField.db_type")
         return "char(52)"
 
     def from_db_value(self, value, expression, connection):
@@ -109,7 +129,8 @@ class ColorField(Field):
         return Color(r, g, b)
 
     def get_prep_value(self, value):
-        log.info("ColorField.get_prep_value")
+        log.debug("ColorField.get_prep_value")
+        log.debug(value)
         if value is None:
-            return None
-        return ",".join([value.r, value.g, value.b])
+            return ",".join(["255", "255", "255"])
+        return ",".join(map(lambda x: str(x), [value.r, value.g, value.b]))

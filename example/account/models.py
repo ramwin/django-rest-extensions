@@ -1,8 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from rest_extensions.fields import DictField, ColorField
+from rest_extensions.fields import DictField, ColorField, Color
 
 
 class User(AbstractUser):
-    extra = ColorField(null=True)
+    fav_color = ColorField(default=Color.default)
     pass

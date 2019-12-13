@@ -12,8 +12,8 @@ from . import views
 log = logging.getLogger(__name__)
 
 
-log.info("load rest_extensions urls")
-log.info(apps.app_configs)
+log.debug("load rest_extensions urls")
+log.debug(apps.app_configs)
 app_name = "rest_extensions"
 router = routers.DefaultRouter()
 api_urlpatterns = []
@@ -42,15 +42,15 @@ class AppModelUrl(object):
 
 
 for app_key_name in apps.app_configs:
-    log.info(app_key_name)
+    log.debug(app_key_name)
     app_config = apps.app_configs[app_key_name]
     app_urls = AppUrls(app_config)
-    log.info("引入app: {}".format(app_key_name))
+    log.debug("load app: {}".format(app_key_name))
     api_urlpatterns.append(
         path("{}/".format(app_key_name), include(
             app_urls, namespace=app_key_name)),
     )
-    log.info(app_urls.urlpatterns)
+    log.debug(app_urls.urlpatterns)
 
 app_name = "rest_extensions"
 urlpatterns = list(api_urlpatterns)
