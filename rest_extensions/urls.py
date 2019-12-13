@@ -28,7 +28,7 @@ class AppUrls(object):
         self.app_module = app_config.module
         for model in app_config.get_models():
             model_view_set = views.ModelViewSetFactory(
-                self.app_module, model).create_view_set()
+                self.app_module, model, app_config).create_view_set()
             router.register(model.__name__, model_view_set)
             self.urlpatterns.append(
                 path("{}/multidelete/".format(model.__name__),

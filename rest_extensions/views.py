@@ -221,19 +221,31 @@ class MultiDeleteView(GenericAPIView):
 
 
 class ModelViewSetFactory(object):
-    def __init__(self, app_module, model):
+    def __init__(self, app_module, model, app_config=None):
         self.model = model
         self.app_module = app_module
+        self.app_config = app_config
 
     def create_view_set(self):
+        logging.info("create_view_set")
+
         class TmpModelViewSet(MyModelViewSet):
             pass
 
         model_view_set = TmpModelViewSet
         model_view_set.model = self.model
         model_view_set.queryset = self.model.objects.all()
+        model_view_set.app_module = self.app_module
+        model_view_set.app_config = self.app_config
         model_view_set.permissions = getattr(self.app_module, "permissions",
                                              None)
         model_view_set.serializers = getattr(self.app_module, "serializers",
                                              None)
+        if (model_view_set.permissions):
+            logging.info("有permissions")
+            logging.info(self.app_module)
+        if (self.model.__name__ == "Music"):
+            pass
+            # import ipdb
+            # ipdb.set_trace()
         return model_view_set
