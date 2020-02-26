@@ -1,6 +1,7 @@
 from django.db.models.fields.files import FileField
 from django.utils.decorators import classonlymethod
 from functools import update_wrapper
+import importlib
 import json
 import logging
 from django.views.decorators.csrf import csrf_exempt
@@ -24,13 +25,16 @@ class MyModelViewSet(mixins.AutoPermissionMixin, mixins.AutoSerializerMixin,
     filters = None
 
     def __init__(self, *args, **kwargs):
-        self.filter_class = create_filter(self.filters, self.model)
+        if not hasattr(self, "filter_class"):
+            self.filter_class = create_filter(self.filters, self.model)
         return super(MyModelViewSet, self).__init__(*args, **kwargs)
 
     def get_queryset(self):
         return self.model.objects.all()
 
     def list(self, request, *args, **kwargs):
+        logging.info("查看列表")
+        logging.info(self.filter_class)
         return super(MyModelViewSet, self).list(request, *args, **kwargs)
 
     @classonlymethod
@@ -241,11 +245,25 @@ class ModelViewSetFactory(object):
                                              None)
         model_view_set.serializers = getattr(self.app_module, "serializers",
                                              None)
-        if (model_view_set.permissions):
-            logging.info("有permissions")
-            logging.info(self.app_module)
-        if (self.model.__name__ == "Music"):
-            pass
-            # import ipdb
-            # ipdb.set_trace()
+
+        filter_class = create_filter(
+            model_view_set.filters, model_view_set.model)
+        print("开始找filters")
+        print(self.app_config.name)
+        if self.app_config.name == "money":
+            import ipdb
+            # ipdb.set_trace();
+        if importlib.util.find_spec(
+                "{}.filters".format(self.app_config.name)):
+            print("has filters")
+            filters = importlib.import_module(
+                "{}.filters".format(self.app_config.name))
+            filter_name = "{}Filter".format(self.model.__name__)
+            if hasattr(filters, filter_name):
+                filter_class = getattr(filters, filter_name)
+                print("filter_class变了")
+        model_view_set.filter_class = filter_class
+        if self.app_config.name == "money":
+            logging.info("money的filter_class是")
+            logging.info(filter_class)
         return model_view_set
