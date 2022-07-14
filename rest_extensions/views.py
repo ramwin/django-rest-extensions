@@ -9,8 +9,11 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import (
+    GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+)
 from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer
 from . import paginations, utils, mixins
 from .serializers import MultiDeleteSerializer
 from .filters import create_filter
@@ -267,3 +270,18 @@ class ModelViewSetFactory(object):
             logging.info("money的filter_class是")
             logging.info(filter_class)
         return model_view_set
+
+
+def get_list_create_api_view(model_class):
+    class _ListCreateAPIView(ListCreateAPIView):
+
+        def get_queryset(self):
+            return model_class.objects.all()
+
+        def get_serializer_class(self):
+            class Serializer(ModelSerializer):
+                class Meta:
+                    model = model_class
+                    fields = "__all__"
+            return Serializer
+    return _ListCreateAPIView

@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="django-rest-extensions",
-    version="0.0.1",
+    version="0.1.0",
     author="Xiang Wang",
     author_email="ramwin@qq.com",
     description="create normal api for all your models",
@@ -26,6 +26,5 @@ setuptools.setup(
     install_requires=[
         "django>=2",
         "djangorestframework",
-        "django-rest-swagger",
     ],
 )
