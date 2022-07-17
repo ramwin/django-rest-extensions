@@ -3,9 +3,13 @@
 # Xiang Wang @ 2019-10-10 22:28:41
 
 
-import django_filters
-from rest_framework import serializers
+from django.db.models import Model
 from django.db.models.fields.related import ManyToManyField
+
+from rest_framework import serializers
+
+import django_filters
+
 from rest_extensions.fields import DataListField
 from rest_extensions.serializers import MyJSONField
 
@@ -171,3 +175,23 @@ class FilterClassFactory(object):
 
 def document_tuple(choices):
     return "; ".join(map(lambda x: u"%s:%s" % (x[0], x[1]), choices))
+
+
+def get_fields(model_class: Model) -> list:
+    result = []
+    for field in model_class._meta.fields:
+        data = {
+            "name": field.name,
+            "verbose_name": field.verbose_name,
+            "help_text": field.help_text,
+            "blank": field.blank,
+            "type": {
+                "BooleanField": "bool",
+                "IntegerField": "integer",
+                "BigAutoField": "integer",
+                "TextField": "text",
+            }[field.__class__.__name__]
+        }
+        # if isinstance(field, Model.IntegerFields):
+        result.append(data)
+    return result

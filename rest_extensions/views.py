@@ -275,6 +275,8 @@ class ModelViewSetFactory(object):
 def get_list_create_api_view(model_class):
     class _ListCreateAPIView(ListCreateAPIView):
 
+        ordering = ["id"]
+
         def get_queryset(self):
             return model_class.objects.all()
 
@@ -285,3 +287,23 @@ def get_list_create_api_view(model_class):
                     fields = "__all__"
             return Serializer
     return _ListCreateAPIView
+
+
+def get_detail_api_view(model_class):
+    class _RetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+
+        ordering = ["id"]
+
+        def get_queryset(self):
+            return model_class.objects.all()
+
+        def get_serializer_class(self):
+            class Serializer(ModelSerializer):
+                class Meta:
+                    model = model_class
+                    fields = "__all__"
+            return Serializer
+
+        def post(self, request, *args, **kwargs):
+            return self.patch(request, *args, **kwargs)
+    return _RetrieveUpdateDestroyAPIView
