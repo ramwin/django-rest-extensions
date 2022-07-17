@@ -187,6 +187,7 @@ def get_fields(model_class: Model) -> list:
             "blank": field.blank,
             "type": {
                 "BooleanField": "bool",
+                "DateField": "date",
                 "IntegerField": "integer",
                 "BigAutoField": "integer",
                 "TextField": "text",

@@ -1,4 +1,6 @@
+import re
 from django.db.models.fields.files import FileField
+from django.db.models import Q
 from django.utils.decorators import classonlymethod
 from functools import update_wrapper
 import importlib
@@ -275,7 +277,13 @@ class ModelViewSetFactory(object):
 def get_list_create_api_view(model_class):
     class _ListCreateAPIView(ListCreateAPIView):
 
-        ordering = ["id"]
+        ordering = ["-id"]
+
+        def filter_queryset(self, queryset):
+            for key, value in self.request.query_params.items():
+                if re.match(r"(\w*)__contains", key):
+                    queryset = queryset.filter(**{key: value})
+            return queryset
 
         def get_queryset(self):
             return model_class.objects.all()
