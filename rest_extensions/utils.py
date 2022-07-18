@@ -189,6 +189,7 @@ def get_fields(model_class: Model) -> list:
                 "BooleanField": "bool",
                 "DateField": "date",
                 "IntegerField": "integer",
+                "FloatField": "float",
                 "BigAutoField": "integer",
                 "TextField": "text",
             }[field.__class__.__name__]
