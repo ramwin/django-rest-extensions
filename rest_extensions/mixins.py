@@ -1,9 +1,14 @@
 import logging
 import importlib
 from rest_framework import serializers as rest_serializers
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_extensions.fields import DataListField
 from rest_extensions.serializers import MyJSONField
+
 from . import utils
+
+from .serializers import MultiDeleteSerializer
 
 
 class AutoSerializerMixin(object):
@@ -72,3 +77,16 @@ class AutoPermissionMixin(object):
         else:
             logging.info("no permissions file")
         return permissions
+
+
+class MultiDeleteMixin:
+
+    @action(methods=["POST"], serializer_class=MultiDeleteSerializer, url_path="multi-delete")
+    def multi_delete(self, request, *args, **kwargs):
+        """delete multi instance"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        for instance in self.filter_queryset(self.get_queryset())\
+                .filter(pk__in=serializer.validated_data["ids"]):
+            instance.delete()
+        return Response({}, status=204)
