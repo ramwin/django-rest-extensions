@@ -81,7 +81,7 @@ class AutoPermissionMixin(object):
 
 class MultiDeleteMixin:
 
-    @action(methods=["POST"], serializer_class=MultiDeleteSerializer, url_path="multi-delete")
+    @action(methods=["POST"], detail=False, serializer_class=MultiDeleteSerializer, url_path="multi-delete")
     def multi_delete(self, request, *args, **kwargs):
         """delete multi instance"""
         serializer = self.get_serializer(data=request.data)
