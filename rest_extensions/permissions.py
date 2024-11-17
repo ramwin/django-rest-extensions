@@ -12,3 +12,9 @@ class NoDeletePermission(BasePermission):
         if request.method == "DELETE":
             return False
         return True
+
+
+class SelfPermission(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return obj.user == request.user
