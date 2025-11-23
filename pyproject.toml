@@ -24,12 +24,12 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = ["django", "djangorestframework"]
 
 [project.urls]
-Documentation = "https://github.com/Xiang Wang/rest-extensions#readme"
-Issues = "https://github.com/Xiang Wang/rest-extensions/issues"
-Source = "https://github.com/Xiang Wang/rest-extensions"
+Documentation = "https://github.com/ramwin/django-rest-extensions#readme"
+Issues = "https://github.com/ramwin/django-rest-extensions/issues"
+Source = "https://github.com/ramwin/django-rest-extensions"
 
 [tool.hatch.version]
 path = "src/rest_extensions/__about__.py"
